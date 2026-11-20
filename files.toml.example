@@ -1,0 +1,23 @@
+# Template for the file inventory: the Saasu files this server may read. Copy it to the state
+# directory as files.toml, or point SAASUMCP_FILES_PATH at it. `saasumcp app:validate` checks
+# every entry, and asks Saasu whether each login can do what the tools need.
+#
+# Nothing in here is a credential. Each file's login goes in the environment, by key:
+#
+#   SAASUMCP_<KEY>_USERNAME    SAASUMCP_<KEY>_PASSWORD
+#
+# - where <KEY> is the key in the table name below, uppercased.
+
+# The key - `acme` here - is lowercase letters and digits. It names the environment variables above
+# and is the `file` every tool takes.
+[acme]
+name = "Acme Example Pty Ltd"
+
+# The Saasu file id: the number after "FileId=" in Saasu's address bar.
+file_id = 12345
+
+# Requests this server may send to this file in any 24 hours. Optional; the default is
+# SAASUMCP_DAILY_BUDGET, or 500. Keep the total of everything using a file - this server, any
+# other integration, and people using Saasu's own API tools - well under the file's quota:
+# exceeding it blocks the whole file for 24 hours.
+# daily_budget = 500
