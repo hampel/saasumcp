@@ -69,7 +69,8 @@ list that stops without comment reads as complete.
 `tests/Feature/ServerTest.php` asserts the registered servers are exactly `['saasu']`.
 `App\Exceptions\Handler` sends a rendered exception to stderr, and `bootstrap/app.php` catches a
 malformed `.env` before the handler exists; both are from `xfmcp`, which says why.
-`.github/mcp-smoke.sh` is the binary check.
+`.github/mcp-smoke.sh` is the binary check. It sends `initialize` and a `tools/call` to
+`list-files`, because `initialize` alone still succeeds when every tool call is broken.
 
 **`ValidationServiceProvider` and `TranslationServiceProvider` are listed in `config/app.php`
 because laravel/mcp 1.2 needs them.** From 1.2 it validates every `tools/call` through the
