@@ -30,8 +30,8 @@ return [
     /*
      * Requests this server may send to one Saasu file in any 24 hours, unless the file's entry in
      * the inventory sets its own `daily_budget`. Saasu's quota is a few thousand a day and
-     * exceeding it blocks the WHOLE FILE for 24 hours - every integration on it, saasusync's daily
-     * bookings included - so this stays well short of it. Decided by Simon, 2026-11-21.
+     * exceeding it blocks the WHOLE FILE for 24 hours - every integration on it, including any that
+     * books into it - so this stays well short of it. Decided by Simon, 2026-11-21.
      */
     'daily_budget' => (int) env('SAASUMCP_DAILY_BUDGET', 500),
 

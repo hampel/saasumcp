@@ -32,7 +32,7 @@ the middle of someone's question.
 ## The budget is the one feature that must not break
 
 **Saasu blocks a file's whole API for 24 hours once its daily quota is exceeded**, every
-integration on it included — another system books sales into the same files every morning. So
+integration on it included, and one that books into a file is usually another system. So
 every request goes through `App\Saasu\Gateway::call()`, which reserves the most a call may send
 in `App\Saasu\DailyBudget` before it starts, runs it on a client held to that number by
 `withRequestBudget()`, and gives back what it did not use. **A tool never builds a client

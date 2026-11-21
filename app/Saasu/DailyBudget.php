@@ -14,7 +14,7 @@ use Illuminate\Contracts\Cache\Repository;
  * server process.
  *
  * THE ONE SAFETY-CRITICAL THING THIS TOOL DOES. Saasu blocks a file's whole API for 24 hours once
- * its daily quota is exceeded - every integration on it, saasusync's morning bookings included -
+ * its daily quota is exceeded - every integration on it, including any that books into it -
  * and the people asking questions through this server cannot see that quota. So the server keeps
  * its own, far below Saasu's, and refuses a call that would pass it.
  *
