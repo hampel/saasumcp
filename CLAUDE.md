@@ -66,10 +66,10 @@ list that stops without comment reads as complete.
   otherwise, and a login without purchase permission is refused an untyped payment list with a
   400 about a null collection.
 - **`list-journals`'s `account_id` is this server's filter, not Saasu's.** Saasu filters journals
-  by date, modification date, contact and tags only, and a listed journal has no lines, so it reads each journal in
-  the range, one request each. `ListJournals::MAX_READS` caps that at 25, and the whole call is
-  reserved up front, so the answer's count is right. Bank transfers are not readable:
-  `saasu-api`, which covers every operation Saasu documents, has no such entity.
+  by date, modification date, contact and tags only, and a listed journal has no lines, so it
+  reads each journal in the range, one request each. `ListJournals::MAX_READS` caps that at 25,
+  and the whole call is reserved up front, so the answer's count is right. Bank transfers are not
+  readable: `saasu-api`, which covers every operation Saasu documents, has no such entity.
 - **`list-accounts` and `list-tax-codes` are cached for 24 hours** in the same store, shared
   across processes, because reading any invoice line needs them.
 
