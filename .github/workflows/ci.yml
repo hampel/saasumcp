@@ -145,7 +145,7 @@ jobs:
         run: composer build
 
       - name: It announces the tag it was built from
-        # config/app.php holds app('git.version'), compiled in as a literal.
+        # config/app.php holds App\Support\Version's git describe, compiled in as a literal.
         # Building before tagging would ship a binary announcing the previous
         # release; a tag-triggered build cannot, and this asserts it anyway.
         run: |
