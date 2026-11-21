@@ -53,6 +53,9 @@ use Laravel\Mcp\Server\Attributes\Name;
 
     Transaction dates are calendar dates in the books: read the date and ignore the time Saasu attaches.
 
+    Bank transfers made in Saasu's own screens cannot be read through its API by any login: they show only in
+    bank-balances. Asked about one, say it cannot be seen from here rather than that it does not exist.
+
     When a tool returns an error, read it: it says whether the file is unknown, the login is refused or lacks a
     permission, the record does not exist, or the budget is spent - different problems with different fixes.
     TEXT)]

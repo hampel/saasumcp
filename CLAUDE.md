@@ -68,8 +68,10 @@ list that stops without comment reads as complete.
 - **`list-journals`'s `account_id` is this server's filter, not Saasu's.** Saasu filters journals
   by date, modification date, contact and tags only, and a listed journal has no lines, so it
   reads each journal in the range, one request each. `ListJournals::MAX_READS` caps that at 25,
-  and the whole call is reserved up front, so the answer's count is right. Bank transfers are not
-  readable: `saasu-api`, which covers every operation Saasu documents, has no such entity.
+  and the whole call is reserved up front, so the answer's count is right. Bank transfers made in
+  Saasu's screens are not readable at all - not journals, not payments, not in search, no
+  endpoint - and show only in bank balances (measured by `saasu-api`'s `bank-transfers` exercise,
+  2026-11-22), so `bank-balances`, `list-journals` and the server's instructions say so.
 - **`list-accounts` and `list-tax-codes` are cached for 24 hours** in the same store, shared
   across processes, because reading any invoice line needs them.
 

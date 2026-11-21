@@ -31,7 +31,8 @@ use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
     `account_id` is not a filter Saasu has, so this server reads every journal in the range, ONE REQUEST EACH, and
     keeps those with a line on that account, returned whole, lines included. It refuses a range holding more than
     25 journals - having spent the list request finding that out - so narrow the range first: a quarter rather than
-    a year, say. Bank transfers are not journals, and Saasu's API documents no way to read them.
+    a year, say. A bank transfer made in Saasu's own screens is not a journal and cannot be read through Saasu's
+    API at all, so its absence here proves nothing; one booked as a journal is listed like any other.
     TEXT)]
 #[IsReadOnly]
 #[IsIdempotent]

@@ -6,6 +6,11 @@ All notable changes to this project are recorded here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- `bank-balances`, `list-journals` and the server's instructions say that a bank transfer made in
+  Saasu's own screens cannot be read through its API, and shows only in a balance.
+
 ## [0.2.0] - 2026-11-22
 
 ### Added
