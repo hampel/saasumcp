@@ -11,7 +11,7 @@ payments without holding a Saasu login.
 
 **`README.md` is the operator's document; this file is why the code is the way it is.**
 `CLAUDE.local.md`, gitignored, records where it runs, which files it reads and what is undecided.
-**Unreleased**; the structure follows `xfmcp`. *Releasing* below is the procedure.
+Released from 0.1.0; the structure follows `xfmcp`. *Releasing* below is the procedure.
 
 ## Commands
 
