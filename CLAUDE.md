@@ -24,6 +24,11 @@ composer check                     # phpstan, then pest
 composer build                     # release phar into builds/, refusing dev dependencies
 ```
 
+**`app:validate` is the command to extend** when a tool needs a permission no probe asks for, or
+the server gains a new dependency on its environment: a probe is one request through the
+gateway, so it is counted, and a permission missing from it is found at a deploy rather than in
+the middle of someone's question.
+
 ## The budget is the one feature that must not break
 
 **Saasu blocks a file's whole API for 24 hours once its daily quota is exceeded**, every
