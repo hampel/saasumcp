@@ -16,6 +16,7 @@ use Hampel\Saasu\Api\Client;
 use Hampel\Saasu\Api\Enum\PaymentType;
 use Hampel\Saasu\Api\Filter\DateRange;
 use Hampel\Saasu\Api\Filter\InvoiceFilter;
+use Hampel\Saasu\Api\Filter\JournalFilter;
 use Hampel\Saasu\Api\Filter\PaymentFilter;
 use LaravelZero\Framework\Commands\Command;
 
@@ -222,6 +223,7 @@ class Validate extends Command
             'Lists purchases' => static fn (Client $s): int => count($s->invoices()->list(InvoiceFilter::purchases()->datedBetween($recent), 1, 1)),
             'Lists sale payments' => static fn (Client $s): int => count($s->payments()->list(PaymentFilter::all()->ofType(PaymentType::SalePayment)->paidBetween($recent), 1, 1)),
             'Lists purchase payments' => static fn (Client $s): int => count($s->payments()->list(PaymentFilter::all()->ofType(PaymentType::PurchasePayment)->paidBetween($recent), 1, 1)),
+            'Lists journals' => static fn (Client $s): int => count($s->journals()->list(JournalFilter::all()->datedBetween($recent), 1, 1)),
             'Lists contacts' => static fn (Client $s): int => count($s->contacts()->list(null, 1, 1)),
             'Lists accounts' => static fn (Client $s): int => count($s->accounts()->list(null, 1, 1)),
             'Lists tax codes' => static fn (Client $s): int => count($s->taxCodes()->list(null, 1, 1)),

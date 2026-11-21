@@ -1,7 +1,7 @@
 # saasumcp — Saasu lookups over MCP
 
 A read-only [MCP](https://modelcontextprotocol.io/) server, over stdio, that lets an agent look up
-invoices, payments, contacts, accounts, tax codes, items and bank balances in one or more
+invoices, payments, journals, contacts, accounts, tax codes, items and bank balances in one or more
 [Saasu](https://www.saasu.com/) files. It is for an operator's agent that needs to answer "what
 is this purchase, and how was it paid?" without holding a Saasu login itself.
 
@@ -68,9 +68,9 @@ saasumcp app:validate     # checks it, and asks Saasu for every permission the t
 spending is its own and its token cache is not shared with another integration.
 
 **Give it read access and no write access.** That is enough for every tool, measured against
-Saasu: the reads it needs are **sales, purchases, contacts, accounts and inventory items**. A
-login without the Purchase permission is refused every invoice list, sales included, and an
-untyped payment list. `app:validate` tries each.
+Saasu: the reads it needs are **sales, purchases, journals, contacts, accounts and inventory
+items**. A login without the Purchase permission is refused every invoice list, sales included,
+and an untyped payment list. `app:validate` tries each.
 
 ## Registering the server
 
@@ -90,9 +90,10 @@ Any MCP client that starts a stdio server works the same way: the command is
 |---|---|---|
 | `list-files` | the configured files and their budgets | nothing |
 | `file-access` | whether the login reaches a file, and what the file is | 1 |
-| `get-invoice`, `get-payment`, `get-contact`, `get-account`, `get-item` | one record by its Saasu id | 1 |
+| `get-invoice`, `get-payment`, `get-journal`, `get-contact`, `get-account`, `get-item` | one record by its Saasu id | 1 |
 | `list-invoices` | sales or purchases by date, number or contact | 1 a page, 5 at most |
 | `list-payments` | payments by date, or those applied to one invoice | 1 a page, 5 at most |
+| `list-journals` | manual journals by date, for a contact or touching an account | 1 a page, 5 at most; 1 more a journal read for an account, 25 at most |
 | `find-contacts` | contacts by email, reference, name or date changed | 1 a page, 5 at most |
 | `find-items` | inventory items by a search | 1 a page, 5 at most |
 | `list-accounts`, `list-tax-codes` | the whole chart of accounts, every tax code | kept a day; usually nothing |

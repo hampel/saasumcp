@@ -6,6 +6,14 @@ All notable changes to this project are recorded here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- `get-journal`: one manual journal by id, with every line.
+- `list-journals`: journals by date range, optionally for one contact. `account_id` keeps those
+  with a line on one account; Saasu has no such filter, so it reads each journal in the range,
+  one request each, and refuses a range of more than 25.
+- `app:validate` probes the journal list.
+
 ## [0.1.0] - 2026-11-21
 
 ### Added

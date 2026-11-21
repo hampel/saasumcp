@@ -5,10 +5,12 @@ use App\Mcp\Tools\BankBalances;
 use App\Mcp\Tools\FindContacts;
 use App\Mcp\Tools\GetInvoice;
 use App\Mcp\Tools\GetItem;
+use App\Mcp\Tools\GetJournal;
 use App\Mcp\Tools\GetPayment;
 use App\Mcp\Tools\ListAccounts;
 use App\Mcp\Tools\ListFiles;
 use App\Mcp\Tools\ListInvoices;
+use App\Mcp\Tools\ListJournals;
 use App\Mcp\Tools\ListPayments;
 use App\Saasu\DailyBudget;
 use App\Support\FileInventory;
@@ -239,4 +241,63 @@ it('never puts the password in a request it was not meant for', function () {
     foreach (dataRequests() as $request) {
         expect($request->url().json_encode($request->headers()))->not->toContain(PASSWORD);
     }
+});
+
+it('shows a journal with every line, less its links', function () {
+    fakeSaasu(['Journal/*' => 'journal']);
+
+    $answer = answer(GetJournal::class, ['file' => 'acme', 'journal_id' => 5093684]);
+
+    expect($answer['journal'])->toHaveKeys(['Currency', 'FxRate', 'AutoPopulateFxRate', 'Notes', 'Tags', 'CreatedDateUtc'])
+        ->and($answer['journal']['Items'][0])->toEqual(['Type' => 'Credit', 'AccountId' => 321, 'TaxCode' => 'G1', 'Amount' => 10.0])
+        ->and($answer['journal'])->not->toHaveKey('_links');
+});
+
+it('refuses a journal list without a range, and asks Saasu nothing', function () {
+    expect(refusal(ListJournals::class, ['file' => 'acme']))->toContain('needs a date range')
+        ->and(Http::recorded())->toBeEmpty();
+});
+
+it('lists journals in a range, for a contact', function () {
+    fakeSaasu(['Journals*' => 'journals']);
+
+    $answer = answer(ListJournals::class, ['file' => 'acme', 'from' => '2025-11-01', 'to' => '2026-11-21', 'contact_id' => 987]);
+
+    expect($answer['count'])->toBe(count($answer['journals']))
+        ->and(urldecode(dataRequests()[0]->url()))->toContain('FromDate=2025-11-01')->toContain('ToDate=2026-11-21')->toContain('JournalContactId=987')
+        ->and(dataRequests())->toHaveCount(1);
+});
+
+it('reads each journal in the range to find those on an account, and keeps only those', function () {
+    $listed = saasuFixture('journals');
+    $listed['Journals'] = [['TransactionId' => 1] + $listed['Journals'][0], ['TransactionId' => 2] + $listed['Journals'][0]];
+    $on = saasuFixture('journal');
+    $off = saasuFixture('journal');
+    $off['Items'][0]['AccountId'] = 999;
+
+    fakeSaasu([
+        'Journals*' => [$listed, 200],
+        'Journal/1*' => [$on, 200],
+        'Journal/2*' => [$off, 200],
+    ]);
+
+    $answer = answer(ListJournals::class, ['file' => 'acme', 'from' => '2026-01-01', 'to' => '2026-03-31', 'account_id' => 321]);
+
+    expect(dataRequests())->toHaveCount(3)
+        ->and($answer['count'])->toBe(1)
+        ->and($answer['journals'][0]['Items'][0]['AccountId'])->toBe(321)
+        ->and($answer['note'])->toContain('Read all 2 journals')
+        ->and($answer['budget']['requests_this_call'])->toBe(4);
+});
+
+it('refuses to read more journals one by one than a call allows', function () {
+    $listed = ['Journals' => array_map(
+        fn (int $id): array => ['TransactionId' => $id] + saasuFixture('journals')['Journals'][0],
+        range(1, ListJournals::MAX_READS + 1),
+    )];
+    fakeSaasu(['Journals*' => [$listed, 200]]);
+
+    expect(refusal(ListJournals::class, ['file' => 'acme', 'from' => '2026-01-01', 'to' => '2026-12-31', 'account_id' => 321]))
+        ->toContain('holds 26 journals')->toContain('Narrow the range')
+        ->and(dataRequests())->toHaveCount(1);
 });

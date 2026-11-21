@@ -12,10 +12,12 @@ use App\Mcp\Tools\GetAccount;
 use App\Mcp\Tools\GetContact;
 use App\Mcp\Tools\GetInvoice;
 use App\Mcp\Tools\GetItem;
+use App\Mcp\Tools\GetJournal;
 use App\Mcp\Tools\GetPayment;
 use App\Mcp\Tools\ListAccounts;
 use App\Mcp\Tools\ListFiles;
 use App\Mcp\Tools\ListInvoices;
+use App\Mcp\Tools\ListJournals;
 use App\Mcp\Tools\ListPayments;
 use App\Mcp\Tools\ListTaxCodes;
 use Laravel\Mcp\Server;
@@ -33,7 +35,7 @@ use Laravel\Mcp\Server\Attributes\Name;
 #[Name('Saasu accounting lookups')]
 #[Instructions(<<<'TEXT'
     Read-only lookups in Saasu accounting files: invoices (sales and purchases) with their lines, payments,
-    contacts, the chart of accounts, tax codes, inventory items and bank balances. Nothing here changes a file.
+    manual journals, contacts, the chart of accounts, tax codes, inventory items and bank balances. Nothing here changes a file.
 
     Start with list-files; every other tool takes a file key from it. A Saasu file is one business's books.
 
@@ -64,8 +66,10 @@ class SaasuServer extends Server
         GetContact::class,
         GetAccount::class,
         GetItem::class,
+        GetJournal::class,
         ListInvoices::class,
         ListPayments::class,
+        ListJournals::class,
         FindContacts::class,
         FindItems::class,
         ListAccounts::class,

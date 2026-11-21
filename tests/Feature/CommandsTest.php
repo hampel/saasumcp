@@ -10,6 +10,7 @@ function fakeEverySaasuProbe(array $overrides = []): void
         'FileIdentity*' => 'file-identity',
         'Invoices*' => 'invoices',
         'Payments*' => 'payments',
+        'Journals*' => 'journals',
         'Contacts*' => 'contacts',
         'Accounts/BankAccountBalances*' => 'bank-balances',
         'Accounts*' => 'accounts',
@@ -57,9 +58,9 @@ it('asks Saasu for everything the tools need, and counts it against the budget',
     [$exit, $output] = runCommand('app:validate');
 
     expect($exit)->toBe(0)
-        ->and($output)->toMatch('/Reaches the file\s+Test File/')->toContain('Lists purchases')->toContain('Lists sale payments')->toContain('Reads bank balances')
-        ->and(dataRequests())->toHaveCount(10)
-        ->and($output)->toContain('11 of 500 now used');
+        ->and($output)->toMatch('/Reaches the file\s+Test File/')->toContain('Lists purchases')->toContain('Lists sale payments')->toContain('Lists journals')->toContain('Reads bank balances')
+        ->and(dataRequests())->toHaveCount(11)
+        ->and($output)->toContain('12 of 500 now used');
 });
 
 it('fails the permission a login lacks, and goes on to the rest', function () {
