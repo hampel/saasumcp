@@ -1,6 +1,7 @@
 <?php
 
 use App\Providers\AppServiceProvider;
+use App\Support\Version;
 use Hampel\Saasu\Api\Laravel\SaasuServiceProvider;
 use Illuminate\Translation\TranslationServiceProvider;
 use Illuminate\Validation\ValidationServiceProvider;
@@ -13,7 +14,8 @@ return [
 
     'name' => 'saasumcp',
 
-    'version' => app('git.version'),
+    // git describe, compiled in by app:build: a tag is exactly itself, anything past one says so
+    'version' => Version::describe(dirname(__DIR__)),
 
     'env' => 'development',
 

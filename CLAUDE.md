@@ -11,7 +11,7 @@ payments without holding a Saasu login.
 
 **`README.md` is the operator's document; this file is why the code is the way it is.**
 `CLAUDE.local.md`, gitignored, records where it runs, which files it reads and what is undecided.
-**Unreleased**; the structure follows `xfmcp`, and its *Releasing* procedure applies as written.
+**Unreleased**; the structure follows `xfmcp`. *Releasing* below is the procedure.
 
 ## Commands
 
@@ -123,6 +123,22 @@ protect, rather than settings in one place and their logins in another. Simon's 
   `bootstrap/app.php` loads it immutably and makes Laravel Zero's second, mutable load of a
   `.env` beside a phar a no-op; measured on the binary on 2026-11-21, all three locations.
 - **A method on a tool must not be called `name()`**: `Primitive::name()` is the tool's name.
+
+## Releasing
+
+CI tests on the floor and the newest PHP the constraint admits, compiles on every push, and
+publishes a release only on a tag.
+
+1. **Move `## [Unreleased]` in the CHANGELOG to `## [<tag>]` first.** The release job takes that
+   section as the notes; a mismatch falls back to generated notes silently.
+2. **Tag, then build.** `app:build` compiles the version in as a literal, and the release job
+   fails if `--version` or the server's `serverInfo.version` differs from the tag. The version
+   is `git describe --tags --dirty` (`App\Support\Version`), not Laravel Zero's nearest tag: a
+   checkout past a release says so (`0.1.0-2-g1234abc`), and a modified tree adds `-dirty`,
+   which the release job would refuse.
+3. **The maintainer pushes the tag**; CI publishes `saasumcp-<version>` and `SHA256SUMS`.
+4. **Pin an install to the published `SHA256SUMS`, never to a local build**: box stamps the
+   phar, so the same commit does not compile to the same bytes.
 
 ## Conventions
 
