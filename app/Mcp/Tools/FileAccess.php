@@ -18,7 +18,7 @@ use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
     and settings. One request, plus a login if none is cached.
 
     Use it when a file is new to you, or when another tool's error suggests the login is the problem. Check
-    `TradingName`/`LegalEntityName` against the business you expected: a login that reaches several files would
+    `Name`/`FullLegalName` against the business you expected: a login that reaches several files would
     answer for the wrong one without complaint. It does not show which permissions the login has; a tool that
     lacks one says so when refused.
     TEXT)]

@@ -184,10 +184,19 @@ class Gateway
             ),
             $e instanceof TwoFactorRequiredException => ucfirst($whose).' has two-factor authentication on, which a server '
                 .'cannot answer. It needs a login without it.',
-            $e instanceof NotAuthenticatedException => sprintf(
-                'Saasu refused %s: its username or password is wrong, or the user has been removed from the file. '
+            // the token endpoint names its refusal; a data endpoint answers a bare 401, which with a
+            // fresh token means the login is good and this file is not one it may open
+            $e instanceof NotAuthenticatedException && $e->oauthError() !== null => sprintf(
+                'Saasu refused to log in %s (%s): the username or password is wrong. '
                 .'This is a configuration problem on the server, not an empty answer.',
                 $whose,
+                $e->oauthError(),
+            ),
+            $e instanceof NotAuthenticatedException => sprintf(
+                'Saasu accepted %s but refused it file %d: the user is not on that file, or the file id is wrong. '
+                .'This is a configuration problem on the server, not an empty answer.',
+                $whose,
+                $file->fileId,
             ),
             $e instanceof NotPermittedException => sprintf(
                 'Saasu refused %s permission for this. The login is deliberately limited; what it may see is set in '

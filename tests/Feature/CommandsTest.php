@@ -57,7 +57,7 @@ it('asks Saasu for everything the tools need, and counts it against the budget',
     [$exit, $output] = runCommand('app:validate');
 
     expect($exit)->toBe(0)
-        ->and($output)->toContain('Lists purchases')->toContain('Lists sale payments')->toContain('Reads bank balances')
+        ->and($output)->toMatch('/Reaches the file\s+Test File/')->toContain('Lists purchases')->toContain('Lists sale payments')->toContain('Reads bank balances')
         ->and(dataRequests())->toHaveCount(10)
         ->and($output)->toContain('11 of 500 now used');
 });
@@ -80,8 +80,19 @@ it('stops probing a file its login cannot reach', function () {
     [$exit, $output] = runCommand('app:validate');
 
     expect($exit)->toBe(1)
-        ->and($output)->toContain('username or password is wrong')
+        ->and($output)->toContain('refused it file 12345')->toContain('not on that file')
         ->and(dataRequests())->toHaveCount(1);
+});
+
+it('says the password is wrong when the token is refused, and sends nothing more', function () {
+    fakeSaasu(['authorisation/*' => [['error' => 'invalid_credentials', 'error_description' => 'Invalid username or password'], 401]]);
+    useFiles(['acme' => ['name' => 'Acme', 'file_id' => 12345]]);
+
+    [$exit, $output] = runCommand('app:validate');
+
+    expect($exit)->toBe(1)
+        ->and($output)->toContain('username or password is wrong')->toContain('invalid_credentials')
+        ->and(sentRequests())->toHaveCount(1);
 });
 
 it('fails a state directory that follows the working directory', function () {

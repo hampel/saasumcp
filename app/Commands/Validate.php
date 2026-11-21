@@ -195,7 +195,7 @@ class Validate extends Command
             return;
         }
 
-        if (! $this->probe($gateway, $file, 'Reaches the file', static fn (Client $saasu): string => $saasu->files()->identity()->raw['TradingName'] ?? 'yes')) {
+        if (! $this->probe($gateway, $file, 'Reaches the file', static fn (Client $saasu): string => $saasu->files()->identity()->raw['Name'] ?? 'yes')) {
             return; // every other probe would fail the same way, and spend a request saying so
         }
 
