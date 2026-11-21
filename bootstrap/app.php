@@ -5,6 +5,8 @@ use App\Kernel;
 use Dotenv\Dotenv;
 use Dotenv\Exception\InvalidFileException;
 use LaravelZero\Framework\Application;
+use LaravelZero\Framework\Bootstrap\BuildLoadEnvironmentVariables;
+use LaravelZero\Framework\Contracts\BootstrapperContract;
 
 $app = Application::configure(basePath: dirname(__DIR__))->create();
 
@@ -32,6 +34,10 @@ $app->singleton(Illuminate\Contracts\Debug\ExceptionHandler::class, ExceptionHan
  *
  * It is loaded here rather than left to the framework because the storage path below is
  * resolved before the application boots.
+ *
+ * IMMUTABLE: a variable already in the environment - exported, or passed by the MCP client when
+ * it starts the server - wins over the same key in the file. A mutable load let the file
+ * override a client's `--env` silently (measured 2026-11-21, by an audit).
  */
 $phar = Phar::running(false);
 
@@ -50,7 +56,7 @@ foreach ($candidates as $envFile) {
         $app->loadEnvironmentFrom(basename($envFile));
 
         try {
-            Dotenv::createMutable(dirname($envFile), basename($envFile))->safeLoad();
+            Dotenv::createImmutable(dirname($envFile), basename($envFile))->safeLoad();
         } catch (InvalidFileException $e) {
             // safeLoad() swallows a missing file, not a malformed one. This runs before the
             // kernel or the handler exist, so nothing else can keep the trace off stdout.
@@ -72,6 +78,14 @@ foreach ($candidates as $envFile) {
  */
 $app->instance('saasumcp.env.loaded', $loaded);
 $app->instance('saasumcp.env.candidates', array_values($candidates));
+
+// Laravel Zero loads a .env beside a phar a second time, MUTABLY, "to override environment
+// variables" - which would put the file back over a client's --env for that one location. The
+// search above has already loaded it, immutably, so the framework's pass is made a no-op.
+$app->instance(BuildLoadEnvironmentVariables::class, new class implements BootstrapperContract
+{
+    public function bootstrap(Application $app): void {}
+});
 
 if ($phar) {
     $app->useStoragePath(env('LARAVEL_STORAGE_PATH', getcwd()));

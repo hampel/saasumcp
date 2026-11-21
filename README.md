@@ -28,7 +28,8 @@ From a checkout, `composer install` and run `php saasumcp` in place of `saasumcp
 Three things: an environment file, a file inventory, and a state directory.
 
 **The environment file** says where the state lives, and holds no credential. `.env.example`
-is the template and says where the file is looked for.
+is the template and says where the file is looked for. A variable already set, exported or
+passed by the MCP client, wins over the same key in the file.
 
 ```dotenv
 SAASUMCP_STATE_PATH=/var/lib/saasumcp

@@ -114,6 +114,9 @@ protect, rather than settings in one place and their logins in another. Simon's 
   makes them impossible to enter; `StateDirectory` creates the parent 0700 instead.
 - **Transaction dates are calendar dates.** `Present::dateNote()` says so in every answer that
   carries a record.
+- **The environment file never overrides a variable already set**, so a client's `--env` wins.
+  `bootstrap/app.php` loads it immutably and makes Laravel Zero's second, mutable load of a
+  `.env` beside a phar a no-op; measured on the binary on 2026-11-21, all three locations.
 - **A method on a tool must not be called `name()`**: `Primitive::name()` is the tool's name.
 
 ## Conventions
