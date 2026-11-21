@@ -14,8 +14,4 @@
             <directory>./app</directory>
         </include>
     </source>
-    <php>
-        <!-- every faked request after the first would otherwise wait a second -->
-        <env name="SAASU_THROTTLE" value="none"/>
-    </php>
 </phpunit>

@@ -24,6 +24,8 @@ uses()->beforeEach(function () {
         // a fixture, not a location: nothing parses it, useFiles() supplies the files
         'saasumcp.files_path' => '/nonexistent/files.toml',
         'saasumcp.daily_budget' => 500,
+        // no waiting a second between faked requests
+        'saasu.throttle' => 'none',
         // tokens, throttle slots, budgets and cached lists in memory, never on disk
         'cache.stores.saasumcp' => ['driver' => 'array', 'serialize' => true],
     ]);
