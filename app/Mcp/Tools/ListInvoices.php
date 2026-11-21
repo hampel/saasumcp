@@ -28,6 +28,10 @@ use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
 
     A listed invoice has no line items: get-invoice with its `TransactionId` has them. `from` and `to` are the
     invoice's transaction date, inclusive, YYYY-MM-DD.
+
+    `payment_status` "unpaid" includes PART-PAID invoices: Saasu has no part-paid status, and gives one
+    `PaymentStatus` U like an invoice with nothing paid (measured). Tell them apart by `AmountOwed` against
+    `TotalAmount`.
     TEXT)]
 #[IsReadOnly]
 #[IsIdempotent]
@@ -43,7 +47,7 @@ class ListInvoices extends SaasuTool
             'invoice_number' => $schema->string()->description('An invoice number, matched whole.'),
             'purchase_order_number' => $schema->string()->description('A purchase order number, matched whole.'),
             'contact_id' => $schema->integer()->min(1)->description('The Saasu id of the contact billed.'),
-            'payment_status' => $schema->string()->enum(['paid', 'unpaid'])->description('Only paid, or only unpaid, invoices.'),
+            'payment_status' => $schema->string()->enum(['paid', 'unpaid'])->description('Only paid, or only unpaid, invoices. Unpaid includes part-paid.'),
             'pages' => $this->pagesArgument($schema),
         ];
     }

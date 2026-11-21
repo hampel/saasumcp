@@ -20,9 +20,11 @@ use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
     Find contacts by email, by the reference another system gave them, by name or company, or by when they were
     last changed. At least one is required: there is no way to list every contact.
 
-    `email` and `reference` are matched whole, ignoring case; `email` matches the PRIMARY address only, not a
-    contact's additional ones (measured). How Saasu matches the names has not been measured, so a name that finds
-    nothing is not proof there is no such contact - try the email. Several filters together must all match.
+    Every text filter is matched WHOLE, ignoring case (measured): `family_name` "supplier" finds Supplier, "Supp"
+    finds nothing, and part of an email address finds nothing. `email` matches the PRIMARY address only, not a
+    contact's additional ones. A person is entered with `given_name` and `family_name` and no company, so
+    `company_name` does not find them - a name that finds nothing is not proof there is no such contact; try the
+    other name fields, or the email. Several filters together must all match.
     `reference` is Saasu's `ContactId` field, where another system keeps its own id for the contact; it is not
     unique, so more than one contact can answer.
 

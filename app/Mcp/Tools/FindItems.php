@@ -16,8 +16,9 @@ use Laravel\Mcp\Server\Tools\Annotations\IsIdempotent;
 use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
 
 #[Description(<<<'TEXT'
-    Find inventory items with Saasu's item search, asking for those that contain some text. `search` is required: there is no way to
-    list every item.
+    Find inventory items with Saasu's item search. `search` is required: there is no way to list every item. It
+    need not be whole and ignores case (measured: "widget" finds an item coded SEED-WIDGET and described "Seed
+    widget").
 
     COST: one request per page of 100, plus a login if none is cached - `pages` sets the most it may fetch (default
     1, at most 5). get-item has the full record for one.
