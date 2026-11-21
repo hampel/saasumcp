@@ -24,10 +24,6 @@ uses()->beforeEach(function () {
         // a fixture, not a location: nothing parses it, useFiles() supplies the files
         'saasumcp.files_path' => '/nonexistent/files.toml',
         'saasumcp.daily_budget' => 500,
-        'saasumcp.credentials' => [
-            'acme' => ['username' => 'api@acme.example.test', 'password' => PASSWORD],
-            'other' => ['username' => 'api@other.example.test', 'password' => PASSWORD],
-        ],
         // tokens, throttle slots, budgets and cached lists in memory, never on disk
         'cache.stores.saasumcp' => ['driver' => 'array', 'serialize' => true],
     ]);
@@ -44,12 +40,22 @@ uses()->beforeEach(function () {
 const PASSWORD = 'password-that-must-never-be-shown';
 
 /**
- * Bind an inventory that answers from an array instead of reading a file.
+ * Bind an inventory that answers from an array instead of reading a file. Each file gets a login,
+ * api@<key>.example.test and PASSWORD, unless it names its own; a null leaves that setting out.
  *
  * @param  array<string, mixed>|FileInventoryException  $files
  */
 function useFiles(array|FileInventoryException $files): void
 {
+    if (is_array($files)) {
+        foreach ($files as $key => $row) {
+            $files[$key] = array_filter(
+                $row + ['username' => 'api@'.$key.'.example.test', 'password' => PASSWORD],
+                fn (mixed $value): bool => $value !== null,
+            );
+        }
+    }
+
     app()->instance(FileInventory::class, new class($files) extends FileInventory
     {
         public function __construct(private array|FileInventoryException $fixture) {}

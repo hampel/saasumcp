@@ -8,11 +8,13 @@ use PhpCollective\Toml\Exception\ParseException;
 use PhpCollective\Toml\Toml;
 
 /**
- * The Saasu files this server may read: the inventory file, and a login for each from the
- * environment.
+ * The Saasu files this server may read, and the login for each: the inventory file.
  *
- * The file is TOML and holds no credential, so it is safe to read and to show; files.toml.example
- * is its template. Every top-level table is a file, named by its key, which every tool takes.
+ * The file is TOML, and HOLDS A PASSWORD FOR EVERY FILE, as xfmcp's holds an API key for every
+ * forum - one file to render and protect, rather than settings in one place and their logins in
+ * another. So nothing read from it is ever quoted back: not a parse error, not an unknown setting's
+ * value. files.toml.example is its template. Every top-level table is a file, named by its key,
+ * which every tool takes.
  *
  * READ AGAIN WHENEVER IT CHANGES. The server is one process for the life of a client's session,
  * so a parse kept for the life of the process would hide a newly added file until the client
@@ -24,7 +26,7 @@ use PhpCollective\Toml\Toml;
  */
 class FileInventory
 {
-    private const KEYS = ['name', 'file_id', 'daily_budget'];
+    private const KEYS = ['name', 'file_id', 'daily_budget', 'username', 'password'];
 
     /** @var array<string, SaasuFile>|null */
     private ?array $files = null;
@@ -148,14 +150,14 @@ class FileInventory
     private function file(string $key, array $row): SaasuFile
     {
         if (preg_match('/^[a-z0-9]+$/', $key) !== 1) {
-            throw new FileInventoryException('file "'.$key.'": a key is lowercase letters and digits only, because it names environment variables');
+            throw new FileInventoryException('file "'.$key.'": a key is lowercase letters and digits only - it is the `file` every tool takes');
         }
 
         $fail = static fn (string $what): FileInventoryException => new FileInventoryException('file "'.$key.'": '.$what);
 
         foreach (array_keys($row) as $setting) {
             if (! in_array($setting, self::KEYS, true)) {
-                throw $fail('"'.$setting.'" is not a setting - a file has '.implode(', ', self::KEYS).', and its login goes in the environment');
+                throw $fail('"'.$setting.'" is not a setting - a file has '.implode(', ', self::KEYS));
             }
         }
 
@@ -177,21 +179,20 @@ class FileInventory
             throw $fail('daily_budget must be a positive integer, or left out for the default');
         }
 
-        $credentials = config('saasumcp.credentials.'.$key);
-        $credentials = is_array($credentials) ? $credentials : [];
+        $username = $row['username'] ?? null;
+        $password = $row['password'] ?? null;
 
-        return new SaasuFile(
-            $key,
-            trim($name),
-            $fileId,
-            $budget,
-            self::credential($credentials['username'] ?? null),
-            self::credential($credentials['password'] ?? null),
-        );
-    }
+        foreach (['username' => $username, 'password' => $password] as $setting => $value) {
+            if ($value !== null && (! is_string($value) || trim($value) === '')) {
+                throw $fail($setting.' must be text, or left out until the file has a login');
+            }
+        }
 
-    private static function credential(mixed $value): ?string
-    {
-        return is_string($value) && trim($value) !== '' ? $value : null;
+        // half a login is a typo, not a file waiting for one
+        if (($username === null) !== ($password === null)) {
+            throw $fail($username === null ? 'has a password and no username' : 'has a username and no password');
+        }
+
+        return new SaasuFile($key, trim($name), $fileId, $budget, $username, $password);
     }
 }

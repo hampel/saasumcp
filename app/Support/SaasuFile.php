@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Support;
 
 /**
- * One Saasu file this server may read, as the inventory and the environment describe it.
+ * One Saasu file this server may read, as the inventory describes it.
  */
 final readonly class SaasuFile
 {
@@ -32,12 +32,6 @@ final readonly class SaasuFile
     public function connection(): string
     {
         return 'saasumcp-'.$this->key;
-    }
-
-    /** The environment variable each credential is read from. */
-    public function variable(string $credential): string
-    {
-        return 'SAASUMCP_'.strtoupper($this->key).'_'.strtoupper($credential);
     }
 
     /**

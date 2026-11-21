@@ -12,13 +12,17 @@ function inventoryFrom(string $toml): FileInventory
     return new FileInventory;
 }
 
-it('reads a file, its default budget and its login from the environment', function () {
-    $file = inventoryFrom("[acme]\nname = \"Acme\"\nfile_id = 12345\n")->get('acme');
+it('reads a file, its default budget and its login', function () {
+    $file = inventoryFrom("[acme]\nname = \"Acme\"\nfile_id = 12345\nusername = \"api@acme.example.test\"\npassword = \"".PASSWORD."\"\n")->get('acme');
 
     expect($file->fileId)->toBe(12345)
         ->and($file->dailyBudget)->toBe(500)
-        ->and($file->hasCredentials())->toBeTrue()
+        ->and($file->username)->toBe('api@acme.example.test')
         ->and($file->password())->toBe(PASSWORD);
+});
+
+it('reads a file that has no login yet', function () {
+    expect(inventoryFrom("[acme]\nname = \"Acme\"\nfile_id = 1\n")->get('acme')->hasCredentials())->toBeFalse();
 });
 
 it('takes a file\'s own budget over the default', function () {
@@ -29,7 +33,10 @@ it('refuses what it cannot use, naming why', function (string $toml, string $why
     expect(fn () => inventoryFrom($toml)->all())->toThrow(FileInventoryException::class, $why);
 })->with([
     'a key with capitals' => ["[Acme]\nname = \"A\"\nfile_id = 1\n", 'lowercase letters and digits'],
-    'an unknown setting' => ["[acme]\nname = \"A\"\nfile_id = 1\npassword = \"x\"\n", '"password" is not a setting'],
+    'an unknown setting' => ["[acme]\nname = \"A\"\nfile_id = 1\nkey = \"x\"\n", '"key" is not a setting'],
+    'a password alone' => ["[acme]\nname = \"A\"\nfile_id = 1\npassword = \"x\"\n", 'has a password and no username'],
+    'a username alone' => ["[acme]\nname = \"A\"\nfile_id = 1\nusername = \"x\"\n", 'has a username and no password'],
+    'an empty password' => ["[acme]\nname = \"A\"\nfile_id = 1\nusername = \"x\"\npassword = \"\"\n", 'password must be text'],
     'no file id' => ["[acme]\nname = \"A\"\n", 'file_id must be a positive integer'],
     'a file id as text' => ["[acme]\nname = \"A\"\nfile_id = \"1\"\n", 'file_id must be a positive integer'],
     'a zero budget' => ["[acme]\nname = \"A\"\nfile_id = 1\ndaily_budget = 0\n", 'daily_budget must be a positive integer'],
@@ -40,7 +47,7 @@ it('refuses what it cannot use, naming why', function (string $toml, string $why
 
 it('never quotes the text a parse stopped on', function () {
     try {
-        inventoryFrom("[acme]\nname = \"secret-looking-value\nfile_id = 1\n")->all();
+        inventoryFrom("[acme]\nname = \"A\"\nfile_id = 1\nusername = \"u\"\npassword = \"secret-looking-value\n")->all();
     } catch (FileInventoryException $e) {
         expect($e->getMessage())->toContain('not valid TOML')->not->toContain('secret-looking-value');
 

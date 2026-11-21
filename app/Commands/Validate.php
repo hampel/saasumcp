@@ -88,25 +88,9 @@ class Validate extends Command
 
         $loaded = $this->laravel->bound('saasumcp.env.loaded') ? $this->laravel->make('saasumcp.env.loaded') : null;
 
-        if (! is_string($loaded)) {
-            $this->checkSkip('Environment file', 'none found - every setting is a default, and no file has a login');
-
-            return;
-        }
-
-        $stat = @stat($loaded);
-
-        if ($stat === false || DIRECTORY_SEPARATOR === '\\') {
-            $this->checkSkip('Environment file', $loaded);
-
-            return;
-        }
-
-        [$ok, $detail] = self::fileModeVerdict($stat['mode'], $stat['uid'], self::groupName($stat['gid']));
-
-        $ok
-            ? $this->checkOk('Environment file', $loaded.' - '.$detail)
-            : $this->checkFail('Environment file', $loaded.' - '.$detail);
+        is_string($loaded)
+            ? $this->checkOk('Environment file', $loaded)
+            : $this->checkSkip('Environment file', 'none found - every setting is a default');
     }
 
     private function checkState(): void
@@ -162,6 +146,8 @@ class Validate extends Command
 
         $this->checkOk('File inventory', $path.' - '.count($files).' file(s): '.implode(', ', array_keys($files)));
 
+        $this->checkInventoryMode($path);
+
         $default = (int) config('saasumcp.daily_budget');
 
         $this->checkOk('Default daily budget', $default.' requests a file in any 24 hours');
@@ -169,17 +155,33 @@ class Validate extends Command
         return $files;
     }
 
+    /** The inventory holds every file's password, so only the server's user may read it. */
+    private function checkInventoryMode(string $path): void
+    {
+        $stat = @stat($path);
+
+        if (DIRECTORY_SEPARATOR === '\\') {
+            $this->checkSkip('Inventory mode', 'not a Unix file mode on Windows; limit who can read the file in its Security properties');
+        } elseif ($stat === false) {
+            $this->checkSkip('Inventory mode', 'could not be read');
+        } else {
+            [$ok, $detail] = self::fileModeVerdict($stat['mode'], $stat['uid'], self::groupName($stat['gid']));
+
+            $ok ? $this->checkOk('Inventory mode', $detail) : $this->checkFail('Inventory mode', $detail);
+        }
+    }
+
     private function checkFile(SaasuFile $file, Gateway $gateway, DailyBudget $budget): void
     {
         $this->checkOk('Saasu file', $file->name.' - file id '.$file->fileId);
 
         if (! $file->hasCredentials()) {
-            $this->checkFail('Login', sprintf('not set - %s and %s', $file->variable('username'), $file->variable('password')));
+            $this->checkFail('Login', 'not set - add username and password under ['.$file->key.'] in the file inventory');
 
             return;
         }
 
-        $this->checkOk('Login', $file->variable('username').' is set');
+        $this->checkOk('Login', 'username and password set');
 
         $spent = $budget->spent($file);
 

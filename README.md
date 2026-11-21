@@ -27,27 +27,27 @@ From a checkout, `composer install` and run `php saasumcp` in place of `saasumcp
 
 Three things: an environment file, a file inventory, and a state directory.
 
-**The environment file** holds the logins and where the state lives. `.env.example` is the
-template and says where the file is looked for. It holds passwords, so `app:validate` fails it
-at anything wider than 0600, or root-owned and 0640 for a group.
+**The environment file** says where the state lives, and holds no credential. `.env.example`
+is the template and says where the file is looked for.
 
 ```dotenv
 SAASUMCP_STATE_PATH=/var/lib/saasumcp
-SAASUMCP_ACME_USERNAME=mcp@example.com
-SAASUMCP_ACME_PASSWORD=...
 ```
 
-**The file inventory** names the files, and holds no credential. `files.toml.example` is the
-template; by default it is `files.toml` in the state directory.
+**The file inventory** names the files and holds the login for each. `files.toml.example` is the
+template; by default it is `files.toml` in the state directory. It holds passwords, so
+`app:validate` fails it at anything wider than 0600, or root-owned and 0640 for a group.
 
 ```toml
 [acme]
 name = "Acme Example Pty Ltd"
 file_id = 12345
+username = "mcp@example.com"
+password = "..."
 # daily_budget = 500
 ```
 
-The table name is the key every tool takes, and names the environment variables above.
+The table name is the key every tool takes.
 
 **The state directory** is created 0700 on first use. It holds cached OAuth tokens, the shared
 throttle, each file's request count, and the lists kept for a day. Set it absolutely: a compiled

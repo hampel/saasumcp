@@ -1,15 +1,13 @@
-# Template for the file inventory: the Saasu files this server may read. Copy it to the state
-# directory as files.toml, or point SAASUMCP_FILES_PATH at it. `saasumcp app:validate` checks
-# every entry, and asks Saasu whether each login can do what the tools need.
+# Template for the file inventory: the Saasu files this server may read, and a login for each.
+# Copy it to the state directory as files.toml, or point SAASUMCP_FILES_PATH at it.
+# `saasumcp app:validate` checks every entry, and asks Saasu whether each login can do what the
+# tools need.
 #
-# Nothing in here is a credential. Each file's login goes in the environment, by key:
-#
-#   SAASUMCP_<KEY>_USERNAME    SAASUMCP_<KEY>_PASSWORD
-#
-# - where <KEY> is the key in the table name below, uppercased.
+# THE LIVE FILE HOLDS A SAASU PASSWORD FOR EVERY FILE. Keep it out of any repository and make it
+# 0600, or root-owned and 0640 for a group of the user that runs the server; `app:validate` fails
+# anything wider.
 
-# The key - `acme` here - is lowercase letters and digits. It names the environment variables above
-# and is the `file` every tool takes.
+# The key - `acme` here - is lowercase letters and digits, and is the `file` every tool takes.
 [acme]
 name = "Acme Example Pty Ltd"
 
@@ -21,3 +19,10 @@ file_id = 12345
 # other integration, and people using Saasu's own API tools - well under the file's quota:
 # exceeding it blocks the whole file for 24 hours.
 # daily_budget = 500
+
+# A Saasu login made for this server alone, without two-factor authentication, and not one
+# another integration uses, so its spending and its cached token are its own. It needs view access
+# to sales, purchases, contacts, accounts and inventory items. Leave both lines out until the file
+# has one: the file is then listed, and every call to it refused.
+username = "mcp@example.com"
+password = "xxxxxxxxxxxx"

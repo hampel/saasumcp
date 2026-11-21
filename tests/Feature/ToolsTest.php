@@ -102,12 +102,12 @@ it('names an unknown file and the ones there are', function () {
         ->toContain('no Saasu file called "nope"')->toContain('acme, other')->toContain('list-files');
 });
 
-it('names the missing login without showing the other half', function () {
-    config(['saasumcp.credentials.acme' => ['username' => 'api@acme.example.test']]);
-    useFiles(['acme' => ['name' => 'Acme', 'file_id' => 12345]]);
+it('says a file has no login, and sends nothing', function () {
+    useFiles(['acme' => ['name' => 'Acme', 'file_id' => 12345, 'username' => null, 'password' => null]]);
 
     expect(refusal(GetInvoice::class, ['file' => 'acme', 'invoice_id' => 1]))
-        ->toContain('SAASUMCP_ACME_PASSWORD')->not->toContain('api@acme');
+        ->toContain('has no login configured')->toContain('no username and password')
+        ->and(Http::recorded())->toBeEmpty();
 });
 
 it('turns a permission refusal into a sentence about the login', function () {

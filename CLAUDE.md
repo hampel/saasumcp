@@ -90,13 +90,21 @@ passed on, capped at 400 characters — the package has already refused to quote
 **A record goes out as Saasu sent it, less `_links`.** `Entity::$raw` keeps fields the package
 does not model and an `InvoiceType` its enum lacks, both of which a typed presentation would drop.
 
-## The inventory holds no credential
+## The inventory holds the logins
 
-**`files.toml` names files; logins come from `SAASUMCP_<KEY>_USERNAME` and `_PASSWORD`**, gathered
-by pattern in `config/saasumcp.php`, as `saasusync` does. The inventory is safe to read and to
-show, and a deployment renders the passwords from its secrets store into the environment file alone.
-`FileInventory` re-reads the file when its modification time or size changes, as `xfmcp` found it
-must, and never quotes the TOML parser.
+**`files.toml` holds each file's `username` and `password` beside its id and budget**, as
+`xfmcp`'s inventory holds each forum's key: one file to render from the secrets store and
+protect, rather than settings in one place and their logins in another. Simon's decision,
+2026-11-21; the first cut read them from `SAASUMCP_<KEY>_*` variables, as `saasusync` does.
+
+- **Nothing read from it is quoted back.** A parse error gives the line and column, never the
+  parser's message; `list-files` and `app:config` say whether a login is set, never what it is.
+- **`app:validate` fails the inventory at anything wider than 0600**, or root-owned and 0640 for
+  a group, which is how a deployment renders it. `Validate::fileModeVerdict()` is `xfmcp`'s.
+- **A file may be listed without a login**, and every call to it is refused before anything is
+  sent. Half a login is an inventory error, since it is a typo rather than a file waiting.
+- `FileInventory` re-reads the file when its modification time or size changes, as `xfmcp` found
+  it must.
 
 ## Things learnt elsewhere that apply here
 

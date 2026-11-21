@@ -62,10 +62,8 @@ class Gateway
 
         if (! $file->hasCredentials()) {
             throw new SaasuCallException(sprintf(
-                'The Saasu file "%s" has no login configured on this server (%s and %s). Run `saasumcp app:validate` where the server runs.',
+                'The Saasu file "%s" has no login configured on this server: its entry in the file inventory has no username and password. Run `saasumcp app:validate` where the server runs.',
                 $file->key,
-                $file->variable('username'),
-                $file->variable('password'),
             ));
         }
 

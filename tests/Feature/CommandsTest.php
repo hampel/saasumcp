@@ -1,6 +1,7 @@
 <?php
 
 use App\Commands\Validate;
+use App\Support\FileInventory;
 use Symfony\Component\Console\Exception\CommandNotFoundException;
 
 function fakeEverySaasuProbe(array $overrides = []): void
@@ -21,17 +22,33 @@ it('validates offline without asking Saasu', function () {
     [$exit, $output] = runCommand('app:validate', ['--offline' => true]);
 
     expect($exit)->toBe(0)
-        ->and($output)->toContain('File: acme')->toContain('SAASUMCP_ACME_USERNAME is set')->toContain('not reached - --offline')
+        ->and($output)->toContain('File: acme')->toContain('username and password set')->toContain('not reached - --offline')
         ->and(Http::recorded())->toBeEmpty();
 });
 
 it('fails a file with no login', function () {
-    config(['saasumcp.credentials' => []]);
+    useFiles(['acme' => ['name' => 'Acme', 'file_id' => 12345, 'username' => null, 'password' => null]]);
 
     [$exit, $output] = runCommand('app:validate', ['--offline' => true]);
 
-    expect($exit)->toBe(1)->and($output)->toContain('SAASUMCP_ACME_USERNAME and SAASUMCP_ACME_PASSWORD');
+    expect($exit)->toBe(1)->and($output)->toContain('add username and password under [acme]');
 });
+
+it('fails an inventory others can read, since it holds the passwords', function () {
+    $path = sys_get_temp_dir().'/saasumcp-files-'.bin2hex(random_bytes(4)).'.toml';
+    file_put_contents($path, "[acme]\nname = \"Acme\"\nfile_id = 1\nusername = \"u\"\npassword = \"p\"\n");
+    chmod($path, 0644);
+    config(['saasumcp.files_path' => $path]);
+    app()->forgetInstance(FileInventory::class);
+
+    [$exit, $output] = runCommand('app:validate', ['--offline' => true]);
+
+    chmod($path, 0600);
+    [$exitAfter, $outputAfter] = runCommand('app:validate', ['--offline' => true]);
+
+    expect($exit)->toBe(1)->and($output)->toMatch('/\[fail\] Inventory mode\s+0644/')
+        ->and($exitAfter)->toBe(0)->and($outputAfter)->toMatch('/\[ ok \] Inventory mode\s+0600/');
+})->skipOnWindows();
 
 it('asks Saasu for everything the tools need, and counts it against the budget', function () {
     fakeEverySaasuProbe();
