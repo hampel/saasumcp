@@ -25,10 +25,10 @@ use Laravel\Mcp\Server\Attributes\Name;
 /**
  * Read-only lookups in Saasu accounting files, over stdio.
  *
- * Every tool here reads, and the class deliberately has no way to do anything else. Whether Saasu
- * offers a view-only login that can still list invoices is unmeasured, so the guarantee that
- * nothing is written rests on which tools exist. A write would be a new tool marked destructive,
- * not a flag on one of these.
+ * Every tool here reads, and the class deliberately has no way to do anything else. Saasu's own
+ * permissions are the second guard: a login with read access to every area and write access to
+ * none passes every probe in app:validate (measured 2026-11-21), so a deployment need not give it
+ * more. A write would be a new tool marked destructive, not a flag on one of these.
  */
 #[Name('Saasu accounting lookups')]
 #[Instructions(<<<'TEXT'

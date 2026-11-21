@@ -66,9 +66,10 @@ saasumcp app:validate     # checks it, and asks Saasu for every permission the t
 **Give the server its own login in each file, without two-factor authentication**, so its
 spending is its own and its token cache is not shared with another integration.
 
-What it needs, measured against Saasu: view access to **sales, purchases, contacts, accounts and
-inventory items**. A login without the Purchase permission is refused every invoice list, sales
-included, and an untyped payment list. `app:validate` tries each.
+**Give it read access and no write access.** That is enough for every tool, measured against
+Saasu: the reads it needs are **sales, purchases, contacts, accounts and inventory items**. A
+login without the Purchase permission is refused every invoice list, sales included, and an
+untyped payment list. `app:validate` tries each.
 
 ## Registering the server
 
@@ -101,9 +102,8 @@ hypermedia links. Every answer carries `budget`: what the call sent and what is 
 
 ## Safety
 
-**Read-only is a property of which tools exist.** Whether Saasu offers a view-only role that can
-still list invoices has not been established, so assume the login could write: the guarantee rests
-on the server having no tool that does. Restrict each login as far as Saasu allows regardless.
+**Read-only twice over.** The server has no tool that writes, and the login it is given has no
+write access in Saasu, which the tools do not need. Either alone keeps a file unchanged.
 
 **Saasu blocks a file's whole API for 24 hours once its daily quota is exceeded** — every
 integration on it, not only this one. So:
