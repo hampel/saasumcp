@@ -93,7 +93,7 @@ Any MCP client that starts a stdio server works the same way: the command is
 | `get-invoice`, `get-payment`, `get-journal`, `get-contact`, `get-account`, `get-item` | one record by its Saasu id | 1 |
 | `list-invoices` | sales or purchases by date, number or contact | 1 a page, 5 at most |
 | `list-payments` | payments by date, or those applied to one invoice | 1 a page, 5 at most |
-| `list-journals` | manual journals by date, for a contact or touching an account | 1 a page, 5 at most; 1 more a journal read for an account, 25 at most |
+| `list-journals` | manual journals by date, for a contact, in a currency or touching an account | 1 a page, 5 at most; 1 more a journal read for an account, 25 at most |
 | `find-contacts` | contacts by email, reference, name or date changed | 1 a page, 5 at most |
 | `find-items` | inventory items by a search | 1 a page, 5 at most |
 | `list-accounts`, `list-tax-codes` | the whole chart of accounts, every tax code | kept a day; usually nothing |

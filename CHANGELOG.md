@@ -6,7 +6,15 @@ All notable changes to this project are recorded here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- `list-journals` takes `currency`, applied to the listed journals at no further cost. With
+  `account_id`, only journals in that currency are read, so a year of a busy file fits the 25.
+
 ### Changed
+
+- `list-journals` with `account_id` refuses a list that did not come back whole, rather than
+  counting only what was listed; more `pages` let it see past 100.
 
 - `bank-balances`, `list-journals` and the server's instructions say that a bank transfer made in
   Saasu's own screens cannot be read through its API, and shows only in a balance.

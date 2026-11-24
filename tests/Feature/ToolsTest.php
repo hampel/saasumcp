@@ -298,6 +298,68 @@ it('refuses to read more journals one by one than a call allows', function () {
     fakeSaasu(['Journals*' => [$listed, 200]]);
 
     expect(refusal(ListJournals::class, ['file' => 'acme', 'from' => '2026-01-01', 'to' => '2026-12-31', 'account_id' => 321]))
-        ->toContain('holds 26 journals')->toContain('Narrow the range')
+        ->toContain('holds 26 journals')->toContain('Give `currency`, or narrow the range')
         ->and(dataRequests())->toHaveCount(1);
+});
+
+/** A journal list of these ids and currencies, each otherwise the fixture's summary. */
+function journalSummaries(array $currencies): array
+{
+    $rows = [];
+
+    foreach ($currencies as $id => $currency) {
+        $rows[] = ['TransactionId' => $id, 'Currency' => $currency] + saasuFixture('journals')['Journals'][0];
+    }
+
+    return ['Journals' => $rows];
+}
+
+it('keeps the listed journals in one currency, and asks Saasu nothing more', function () {
+    fakeSaasu(['Journals*' => [journalSummaries([1 => 'USD', 2 => 'AUD', 3 => 'usd']), 200]]);
+
+    $answer = answer(ListJournals::class, ['file' => 'acme', 'from' => '2025-07-01', 'to' => '2026-06-30', 'currency' => 'usd']);
+
+    expect(array_column($answer['journals'], 'TransactionId'))->toBe([1, 3])
+        ->and($answer['count'])->toBe(2)
+        ->and(dataRequests())->toHaveCount(1)
+        ->and(urldecode(dataRequests()[0]->url()))->not->toContain('Currency');
+});
+
+it('says journals not fetched may hold more in the currency', function () {
+    fakeSaasu(['Journals*' => [journalSummaries(array_fill_keys(range(1, 100), 'AUD')), 200]]);
+
+    $answer = answer(ListJournals::class, ['file' => 'acme', 'from' => '2025-07-01', 'to' => '2026-06-30', 'currency' => 'USD']);
+
+    expect($answer['count'])->toBe(0)
+        ->and($answer['more_exist'])->toBeTrue()
+        ->and($answer['note'])->toContain('may include more in USD');
+});
+
+it('reads only the journals in the currency to find those on an account', function () {
+    $on = saasuFixture('journal');
+
+    fakeSaasu([
+        'Journals*' => [journalSummaries([1 => 'USD'] + array_fill_keys(range(2, 40), 'AUD')), 200],
+        'Journal/1*' => [$on, 200],
+    ]);
+
+    $answer = answer(ListJournals::class, ['file' => 'acme', 'from' => '2025-07-01', 'to' => '2026-06-30', 'currency' => 'USD', 'account_id' => 321]);
+
+    expect(dataRequests())->toHaveCount(2)
+        ->and($answer['count'])->toBe(1)
+        ->and($answer['note'])->toContain('Read all 1 journals in the range in USD');
+});
+
+it('refuses to look for an account in a list that did not come back whole', function () {
+    fakeSaasu(['Journals*' => [journalSummaries(array_fill_keys(range(1, 100), 'AUD')), 200]]);
+
+    expect(refusal(ListJournals::class, ['file' => 'acme', 'from' => '2025-07-01', 'to' => '2026-06-30', 'currency' => 'USD', 'account_id' => 321]))
+        ->toContain('more than the 100 journals listed')->toContain('more `pages`')
+        ->and(dataRequests())->toHaveCount(1);
+});
+
+it('refuses a currency that is not a three-letter code', function () {
+    expect(refusal(ListJournals::class, ['file' => 'acme', 'from' => '2025-07-01', 'to' => '2026-06-30', 'currency' => 'dollars']))
+        ->toContain('three-letter')
+        ->and(Http::recorded())->toBeEmpty();
 });
