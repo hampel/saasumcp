@@ -6,6 +6,8 @@ All notable changes to this project are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-25
+
 ### Added
 
 - `list-journals` takes `currency`, applied to the listed journals at no further cost. With
@@ -22,13 +24,14 @@ All notable changes to this project are recorded here. The format follows
 
 - `list-journals` with `account_id` refuses a list that did not come back whole, rather than
   counting only what was listed; more `pages` let it see past 100.
-
 - `bank-balances`, `list-journals` and the server's instructions say that a bank transfer made in
   Saasu's own screens cannot be read through its API, and shows only in a balance.
 - `bank-balances` says it is the balance now, with no as-of date.
 - `list-payments` says that finding which invoices a list of payments paid costs a get-payment
   each, and that `invoice_id` finds one invoice's payments in one request.
 - `budget.requests_this_call` counts every request a tool call made, not only its last batch.
+- Requires `hampel/saasu-api-laravel` ^0.2, `guzzlehttp/guzzle` ^7.15.2 and `illuminate/http`
+  ^13.40, the lowest releases Composer will install.
 
 ## [0.2.0] - 2026-11-22
 
