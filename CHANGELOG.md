@@ -10,6 +10,13 @@ All notable changes to this project are recorded here. The format follows
 
 - `list-journals` takes `currency`, applied to the listed journals at no further cost. With
   `account_id`, only journals in that currency are read, so a year of a busy file fits the 25.
+- `list-journals` takes `text`, kept when a journal's `Summary` or `Reference` contains it, any
+  part, ignoring case. Free like `currency`, and with `account_id` it narrows what is read.
+- `get-invoice`, `get-payment` and `get-journal` answer with `names`: each account and tax code
+  the record refers to, from the chart of accounts and tax codes kept for a day. A lookup the
+  budget cannot fit leaves the record unnamed and says so.
+- `list-invoices` takes `currency`, applied to the listed invoices, and `compact`, which returns
+  each in 15 fields rather than 35 or so.
 
 ### Changed
 
@@ -18,6 +25,10 @@ All notable changes to this project are recorded here. The format follows
 
 - `bank-balances`, `list-journals` and the server's instructions say that a bank transfer made in
   Saasu's own screens cannot be read through its API, and shows only in a balance.
+- `bank-balances` says it is the balance now, with no as-of date.
+- `list-payments` says that finding which invoices a list of payments paid costs a get-payment
+  each, and that `invoice_id` finds one invoice's payments in one request.
+- `budget.requests_this_call` counts every request a tool call made, not only its last batch.
 
 ## [0.2.0] - 2026-11-22
 

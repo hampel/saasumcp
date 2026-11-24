@@ -29,7 +29,9 @@ use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
 
     `from` and `to` are the payment date, inclusive, YYYY-MM-DD; they are required unless `invoice_id` is given,
     because Saasu otherwise answers for the last month only and that looks like a complete list. A listed payment
-    does not show which invoices it paid: get-payment with its `TransactionId` does.
+    does not show which invoices it paid: get-payment with its `TransactionId` does, ONE REQUEST EACH, so matching
+    a month of payments to their invoices costs a request per payment. To find the payments on one invoice, give
+    `invoice_id` instead: one request.
     TEXT)]
 #[IsReadOnly]
 #[IsIdempotent]

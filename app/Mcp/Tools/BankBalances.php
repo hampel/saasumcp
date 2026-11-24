@@ -14,7 +14,8 @@ use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
 
 #[Description(<<<'TEXT'
     The current balance of each bank account in the file, as Saasu's books have it - which is what has been entered
-    and reconciled, not necessarily what the bank says today.
+    and reconciled, not necessarily what the bank says today. It is the balance NOW: there is no as-of date, so a
+    balance on an earlier day has to be worked out from the transactions since.
 
     Each entry is an `AccountId`, `AccountName` and `Balance`; the account's currency is in list-accounts. One request, plus a login if
     none is cached; not cached, because a balance is the thing that changes.

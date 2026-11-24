@@ -28,7 +28,7 @@ class AppServiceProvider extends ServiceProvider
             $app->make(CacheFactory::class)->store('saasumcp'),
         ));
 
-        // one per process, so lastSpent() answers for the call the tool just made
+        // one per process, so lastSpent() answers for the tool call just made, every request in it
         $this->app->singleton(Gateway::class);
     }
 }

@@ -82,7 +82,6 @@ class Gateway
      */
     public function call(SaasuFile $file, int $requests, Closure $call): mixed
     {
-        $this->lastSpent = 0;
         $allowed = $requests + self::LOGIN_ALLOWANCE;
 
         try {
@@ -100,8 +99,10 @@ class Gateway
         } catch (ExceptionInterface $e) {
             throw new SaasuCallException($this->explain($file, $e, $allowed));
         } finally {
-            $this->lastSpent = $client?->requestsSent() ?? 0;
-            $this->budget->settle($reservation, $this->lastSpent);
+            $sent = $client?->requestsSent() ?? 0;
+            // added, not replaced: a tool that names a record's accounts makes a second call
+            $this->lastSpent += $sent;
+            $this->budget->settle($reservation, $sent);
         }
     }
 
@@ -111,8 +112,8 @@ class Gateway
     }
 
     /**
-     * Start a tool call's count at zero. The gateway lives for the process, so without this an
-     * answer that sent nothing - a cached list - reports what the previous call sent.
+     * Start a tool call's count at zero. The gateway lives for the process and adds up every call
+     * a tool makes, so without this an answer reports what the previous tool sent too.
      */
     public function resetLastSpent(): void
     {

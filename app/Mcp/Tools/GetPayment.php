@@ -18,12 +18,22 @@ use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
     `Reference`, `Summary` and `Notes` are free text; another system's own reference - a PayPal transaction id, say
     - is usually kept in one of them.
 
+    `names`, beside the record, names each account it refers to - `Name`, `Number`, `AccountType`, `Currency` -
+    and each tax code, with its `Rate`. They come from the chart of accounts and tax codes kept for 24 hours, so
+    usually cost nothing; when neither is kept, fetching them costs what list-accounts and list-tax-codes would,
+    about one request per hundred accounts and one for the tax codes.
+
     Ids come from list-payments: `TransactionId` there. One request, plus a login if none is cached.
     TEXT)]
 #[IsReadOnly]
 #[IsIdempotent]
 class GetPayment extends GetRecord
 {
+    protected function named(): bool
+    {
+        return true;
+    }
+
     protected function noun(): string
     {
         return 'payment';

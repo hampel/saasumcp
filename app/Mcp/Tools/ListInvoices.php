@@ -29,6 +29,12 @@ use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
     A listed invoice has no line items: get-invoice with its `TransactionId` has them. `from` and `to` are the
     invoice's transaction date, inclusive, YYYY-MM-DD.
 
+    `currency` (USD, AUD, ...) is not a filter Saasu has, but it costs nothing: the listed invoices are sorted here,
+    and when `more_exist` is true those not fetched may hold more in it.
+
+    `compact` returns each invoice in 15 fields rather than Saasu's 35 or so - id, number, purchase order, date, due
+    date, contact, summary, currency, total, amount owed and status - which lets a year of them fit in an answer.
+
     `payment_status` "unpaid" includes PART-PAID invoices: Saasu has no part-paid status, and gives one
     `PaymentStatus` U like an invoice with nothing paid (measured). Tell them apart by `AmountOwed` against
     `TotalAmount`.
@@ -37,6 +43,13 @@ use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
 #[IsIdempotent]
 class ListInvoices extends SaasuTool
 {
+    /** The fields `compact` keeps, out of the 35 or so Saasu lists. */
+    public const COMPACT = [
+        'TransactionId', 'InvoiceNumber', 'PurchaseOrderNumber', 'TransactionDate', 'DueDate',
+        'BillingContactId', 'BillingContactOrganisationName', 'BillingContactFirstName', 'BillingContactLastName',
+        'Summary', 'Currency', 'TotalAmount', 'AmountOwed', 'PaymentStatus', 'InvoiceStatus',
+    ];
+
     public function schema(JsonSchema $schema): array
     {
         return parent::schema($schema) + [
@@ -48,6 +61,8 @@ class ListInvoices extends SaasuTool
             'purchase_order_number' => $schema->string()->description('A purchase order number, matched whole.'),
             'contact_id' => $schema->integer()->min(1)->description('The Saasu id of the contact billed.'),
             'payment_status' => $schema->string()->enum(['paid', 'unpaid'])->description('Only paid, or only unpaid, invoices. Unpaid includes part-paid.'),
+            'currency' => $schema->string()->description('Only invoices in this currency, a three-letter code such as USD. Applied to the listed invoices, so it costs nothing more.'),
+            'compact' => $schema->boolean()->default(false)->description(sprintf('Return each invoice in %d fields - %s - rather than all Saasu sends.', count(self::COMPACT), implode(', ', self::COMPACT))),
             'pages' => $this->pagesArgument($schema),
         ];
     }
@@ -60,6 +75,8 @@ class ListInvoices extends SaasuTool
         $order = $this->text($request->get('purchase_order_number'), 'purchase_order_number');
         $contact = $this->id($request->get('contact_id'), 'contact_id', required: false);
         $status = $this->choice($request->get('payment_status'), 'payment_status', ['paid', 'unpaid']);
+        $currency = $this->currency($request->get('currency'));
+        $compact = $request->get('compact') === true;
         $pages = $this->pageCount($request->get('pages'));
 
         if ($kind === null) {
@@ -97,12 +114,25 @@ class ListInvoices extends SaasuTool
             $pages,
         ));
 
+        $invoices = $result['records'];
+
+        if ($currency !== null) {
+            $invoices = array_values(array_filter(
+                $invoices,
+                static fn (array $invoice): bool => strtoupper((string) ($invoice['Currency'] ?? '')) === $currency,
+            ));
+        }
+
+        if ($compact) {
+            $invoices = array_map(static fn (array $invoice): array => array_intersect_key($invoice, array_flip(self::COMPACT)), $invoices);
+        }
+
         return [
-            'count' => $result['count'],
+            'count' => count($invoices),
             'more_exist' => $result['more_exist'],
-            'note' => $this->moreNote($result),
+            'note' => $this->moreNote($result).($currency !== null && $result['more_exist'] ? sprintf(' Those not fetched may include more in %s.', $currency) : ''),
             'dates' => Present::dateNote(),
-            'invoices' => $result['records'],
+            'invoices' => $invoices,
         ];
     }
 }

@@ -48,7 +48,7 @@ it('lists the files without contacting Saasu, and without a login', function () 
 });
 
 it('reads an invoice as Saasu sent it, without its links', function () {
-    fakeSaasu(['Invoice/*' => 'invoice']);
+    fakeSaasu(['Invoice/*' => 'invoice', 'TaxCodes*' => 'tax-codes']);
 
     $answer = answer(GetInvoice::class, ['file' => 'acme', 'invoice_id' => 5093684]);
 
@@ -59,18 +59,20 @@ it('reads an invoice as Saasu sent it, without its links', function () {
         ->and($answer['dates'])->toContain('calendar dates');
 
     $sent = dataRequests();
-    expect($sent)->toHaveCount(1)
-        ->and($sent[0]->url())->toContain('Invoice/5093684')->toContain('FileId=12345');
+    expect($sent)->toHaveCount(2)
+        ->and($sent[0]->url())->toContain('Invoice/5093684')->toContain('FileId=12345')
+        ->and($sent[1]->url())->toContain('TaxCodes');
 });
 
-it('counts the login and the request against the budget, and the next call only the request', function () {
-    fakeSaasu(['Invoice/*' => 'invoice']);
+it('counts the login and every request against the budget, and the next call only the request', function () {
+    fakeSaasu(['Invoice/*' => 'invoice', 'TaxCodes*' => 'tax-codes']);
 
     $first = answer(GetInvoice::class, ['file' => 'acme', 'invoice_id' => 1]);
     $second = answer(GetInvoice::class, ['file' => 'acme', 'invoice_id' => 1]);
 
-    expect($first['budget'])->toBe(['requests_this_call' => 2, 'used_last_24h' => 2, 'daily_budget' => 500])
-        ->and($second['budget'])->toBe(['requests_this_call' => 1, 'used_last_24h' => 3, 'daily_budget' => 500]);
+    // the login, the invoice and the tax codes it names; then the invoice alone, the codes kept
+    expect($first['budget'])->toBe(['requests_this_call' => 3, 'used_last_24h' => 3, 'daily_budget' => 500])
+        ->and($second['budget'])->toBe(['requests_this_call' => 1, 'used_last_24h' => 4, 'daily_budget' => 500]);
 });
 
 it('refuses a call that would pass the budget, without asking Saasu', function () {
@@ -234,7 +236,7 @@ it('reads bank balances', function () {
 });
 
 it('never puts the password in a request it was not meant for', function () {
-    fakeSaasu(['Invoice/*' => 'invoice']);
+    fakeSaasu(['Invoice/*' => 'invoice', 'TaxCodes*' => 'tax-codes']);
 
     answer(GetInvoice::class, ['file' => 'acme', 'invoice_id' => 1]);
 
@@ -244,7 +246,7 @@ it('never puts the password in a request it was not meant for', function () {
 });
 
 it('shows a journal with every line, less its links', function () {
-    fakeSaasu(['Journal/*' => 'journal']);
+    fakeSaasu(['Journal/*' => 'journal', 'Accounts*' => 'accounts', 'TaxCodes*' => 'tax-codes']);
 
     $answer = answer(GetJournal::class, ['file' => 'acme', 'journal_id' => 5093684]);
 
@@ -298,7 +300,7 @@ it('refuses to read more journals one by one than a call allows', function () {
     fakeSaasu(['Journals*' => [$listed, 200]]);
 
     expect(refusal(ListJournals::class, ['file' => 'acme', 'from' => '2026-01-01', 'to' => '2026-12-31', 'account_id' => 321]))
-        ->toContain('holds 26 journals')->toContain('Give `currency`, or narrow the range')
+        ->toContain('holds 26 journals')->toContain('Give `currency` or `text`, or narrow the range')
         ->and(dataRequests())->toHaveCount(1);
 });
 
@@ -332,7 +334,7 @@ it('says journals not fetched may hold more in the currency', function () {
 
     expect($answer['count'])->toBe(0)
         ->and($answer['more_exist'])->toBeTrue()
-        ->and($answer['note'])->toContain('may include more in USD');
+        ->and($answer['note'])->toContain('may include more that match');
 });
 
 it('reads only the journals in the currency to find those on an account', function () {
@@ -362,4 +364,105 @@ it('refuses a currency that is not a three-letter code', function () {
     expect(refusal(ListJournals::class, ['file' => 'acme', 'from' => '2025-07-01', 'to' => '2026-06-30', 'currency' => 'dollars']))
         ->toContain('three-letter')
         ->and(Http::recorded())->toBeEmpty();
+});
+
+/** A chart of accounts holding these, each otherwise the fixture's first account. */
+function chartOf(array $accounts): array
+{
+    $rows = [];
+
+    foreach ($accounts as $id => $name) {
+        $rows[] = ['Id' => $id, 'Name' => $name] + saasuFixture('accounts')['Accounts'][0];
+    }
+
+    return ['Accounts' => $rows];
+}
+
+it('names the accounts and tax codes on a journal\'s lines, beside the record', function () {
+    fakeSaasu(['Journal/*' => 'journal', 'Accounts*' => [chartOf([321 => 'PayPal USD']), 200], 'TaxCodes*' => 'tax-codes']);
+
+    $answer = answer(GetJournal::class, ['file' => 'acme', 'journal_id' => 5093684]);
+
+    expect($answer['names']['accounts'])->toEqual(['321' => ['Name' => 'PayPal USD', 'AccountType' => 'Income', 'Currency' => 'AUD', 'IsBankAccount' => false, 'IsActive' => true]])
+        ->and($answer['names']['tax_codes'])->toEqual(['G1' => ['Name' => 'Sale Inc GST', 'Rate' => 0.1, 'IsActive' => true]])
+        ->and($answer['journal']['Items'][0])->not->toHaveKey('Name');
+});
+
+it('gives an account the chart does not hold as null, and says so', function () {
+    fakeSaasu(['Journal/*' => 'journal', 'Accounts*' => 'accounts', 'TaxCodes*' => 'tax-codes']);
+
+    $answer = answer(GetJournal::class, ['file' => 'acme', 'journal_id' => 5093684]);
+
+    expect($answer['names']['accounts'])->toBe(['321' => null])
+        ->and($answer['names']['note'])->toContain('not in the chart of accounts');
+});
+
+it('names from the kept lists, so a second record costs one request', function () {
+    fakeSaasu(['Journal/*' => 'journal', 'Payment/*' => 'payment', 'Accounts*' => [chartOf([321 => 'PayPal USD', 1858 => 'Bank']), 200], 'TaxCodes*' => 'tax-codes']);
+
+    answer(GetJournal::class, ['file' => 'acme', 'journal_id' => 1]);
+    $payment = answer(GetPayment::class, ['file' => 'acme', 'payment_id' => 324]);
+
+    expect($payment['names']['accounts'])->toHaveKey('1858')
+        ->and($payment['names']['accounts']['1858']['Name'])->toBe('Bank')
+        ->and($payment['budget']['requests_this_call'])->toBe(1);
+});
+
+it('still answers with the record when the budget leaves no room to name it', function () {
+    fakeSaasu(['Journal/*' => 'journal']);
+
+    // 20 a day: 12 used leaves room for the journal (1 and a login allowance of 2), not for a list of 5 and 2
+    app(DailyBudget::class)->reserve(app(FileInventory::class)->get('other'), 12);
+
+    $answer = answer(GetJournal::class, ['file' => 'other', 'journal_id' => 1]);
+
+    expect($answer['journal']['TransactionId'])->toBe(5093684)
+        ->and($answer['names'])->not->toHaveKey('accounts')
+        ->and($answer['names']['note'])->toContain('Accounts are not named')->toContain('Tax codes are not named')
+        ->and(dataRequests())->toHaveCount(1);
+});
+
+it('keeps the listed journals with some text in the summary or reference, ignoring case', function () {
+    $rows = journalSummaries([1 => 'AUD', 2 => 'AUD', 3 => 'AUD'])['Journals'];
+    $rows[0]['Summary'] = 'PayPal conversion USD to AUD';
+    $rows[1]['Reference'] = '9XK21CONVERSION';
+    fakeSaasu(['Journals*' => [['Journals' => $rows], 200]]);
+
+    $answer = answer(ListJournals::class, ['file' => 'acme', 'from' => '2025-07-01', 'to' => '2026-06-30', 'text' => 'Conversion']);
+
+    expect(array_column($answer['journals'], 'TransactionId'))->toBe([1, 2])
+        ->and(dataRequests())->toHaveCount(1);
+});
+
+it('reads only the journals with the text to find those on an account', function () {
+    $rows = journalSummaries(array_fill_keys(range(1, 40), 'AUD'))['Journals'];
+    $rows[0]['Summary'] = 'Conversion';
+    fakeSaasu(['Journals*' => [['Journals' => $rows], 200], 'Journal/1*' => 'journal']);
+
+    $answer = answer(ListJournals::class, ['file' => 'acme', 'from' => '2025-07-01', 'to' => '2026-06-30', 'text' => 'conversion', 'account_id' => 321]);
+
+    expect(dataRequests())->toHaveCount(2)
+        ->and($answer['note'])->toContain('Read all 1 journals in the range containing "conversion"');
+});
+
+it('keeps the listed invoices in one currency, and asks Saasu nothing more', function () {
+    $rows = saasuFixture('invoices')['Invoices'];
+    $rows[0]['Currency'] = 'USD';
+    $rows[1]['Currency'] = 'AUD';
+    fakeSaasu(['Invoices*' => [['Invoices' => $rows], 200]]);
+
+    $answer = answer(ListInvoices::class, ['file' => 'acme', 'kind' => 'sale', 'from' => '2026-01-01', 'to' => '2026-12-31', 'currency' => 'usd']);
+
+    expect($answer['count'])->toBe(1)
+        ->and($answer['invoices'][0]['Currency'])->toBe('USD')
+        ->and(urldecode(dataRequests()[0]->url()))->not->toContain('Currency');
+});
+
+it('lists invoices compactly when asked', function () {
+    fakeSaasu(['Invoices*' => 'invoices']);
+
+    $answer = answer(ListInvoices::class, ['file' => 'acme', 'kind' => 'sale', 'from' => '2026-01-01', 'to' => '2026-12-31', 'compact' => true]);
+
+    expect(array_keys($answer['invoices'][0]))->toEqualCanonicalizing(ListInvoices::COMPACT)
+        ->and($answer['count'])->toBe(2);
 });

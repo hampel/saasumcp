@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Mcp\Tools;
 
 use App\Saasu\Gateway;
+use App\Saasu\Lookups;
 use App\Saasu\SaasuCallException;
+use App\Support\Names;
 use App\Support\Present;
 use App\Support\SaasuFile;
 use Hampel\Saasu\Api\Client;
@@ -14,7 +16,8 @@ use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Mcp\Request;
 
 /**
- * One record by its id: one request, plus a login if none is cached.
+ * One record by its id: one request, plus a login if none is cached - and, for a record whose
+ * lines name accounts and tax codes by id, those names beside it from the day-cached lists.
  */
 abstract class GetRecord extends SaasuTool
 {
@@ -26,6 +29,12 @@ abstract class GetRecord extends SaasuTool
 
     /** The record, or null when the file has none with that id. */
     abstract protected function find(Client $saasu, int $id): ?Entity;
+
+    /** Whether the answer names the accounts and tax codes the record refers to. */
+    protected function named(): bool
+    {
+        return false;
+    }
 
     public function schema(JsonSchema $schema): array
     {
@@ -46,9 +55,13 @@ abstract class GetRecord extends SaasuTool
             throw new SaasuCallException(sprintf('"%s" has no %s with id %d.', $file->key, $this->noun(), $id));
         }
 
+        $presented = Present::record($record);
+        $names = $this->named() ? Names::for($presented, new Lookups($gateway), $file) : null;
+
         return [
             'dates' => Present::dateNote(),
-            $this->noun() => Present::record($record),
+            $this->noun() => $presented,
+            ...($names === null ? [] : ['names' => $names]),
         ];
     }
 }

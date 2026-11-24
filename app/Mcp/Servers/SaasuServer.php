@@ -47,8 +47,11 @@ use Laravel\Mcp\Server\Attributes\Name;
     - Ask for one record by id (get-invoice, get-payment, ...) rather than listing to find it, when you have the id.
     - Lists need a date range or a filter, and fetch one page of 100 unless asked for more. Saasu never says how
       many records match, so `more_exist` is all there is: narrow the filter rather than paging on.
-    - list-accounts and list-tax-codes are kept for a day and usually cost nothing. Use them to name the account and
-      tax code ids on invoice lines, instead of asking for accounts one at a time.
+    - get-invoice, get-payment and get-journal name the accounts and tax codes they refer to, in `names`, from the
+      chart of accounts and tax codes kept for a day. list-accounts and list-tax-codes are the same lists, usually
+      free; use them for anything else, instead of asking for accounts one at a time.
+    - A filter Saasu does not have - `currency` on invoices and journals, `text` on journals - costs nothing, and
+      `compact` on list-invoices keeps a long list small.
     - If a call is refused for budget, stop and say what you could not look up. Do not retry it.
 
     Transaction dates are calendar dates in the books: read the date and ignore the time Saasu attaches.

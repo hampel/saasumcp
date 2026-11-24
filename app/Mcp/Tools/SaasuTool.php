@@ -6,7 +6,7 @@ namespace App\Mcp\Tools;
 
 use App\Saasu\Gateway;
 use App\Saasu\SaasuCallException;
-use App\Support\Present;
+use App\Support\Pages;
 use App\Support\SaasuFile;
 use Closure;
 use Hampel\Saasu\Api\Entity\Entity;
@@ -100,26 +100,7 @@ abstract class SaasuTool extends Tool
      */
     protected function pages(Closure $page, int $pages): array
     {
-        $records = [];
-        $fetched = 0;
-        $more = false;
-
-        for ($number = 1; $number <= $pages; $number++) {
-            $result = $page($number);
-            $fetched++;
-
-            foreach ($result as $entity) {
-                $records[] = Present::record($entity);
-            }
-
-            $more = $result->hasMore();
-
-            if (! $more) {
-                break;
-            }
-        }
-
-        return ['records' => $records, 'count' => count($records), 'pages_fetched' => $fetched, 'more_exist' => $more];
+        return Pages::fetch($page, $pages);
     }
 
     /**
@@ -189,6 +170,22 @@ abstract class SaasuTool extends Tool
         $value = trim((string) $value);
 
         return $value === '' ? null : $value;
+    }
+
+    /** @throws SaasuCallException */
+    protected function currency(mixed $value): ?string
+    {
+        $value = $this->text($value, 'currency');
+
+        if ($value === null) {
+            return null;
+        }
+
+        if (preg_match('/^[A-Za-z]{3}$/', $value) !== 1) {
+            throw new SaasuCallException('`currency` must be a three-letter currency code, such as USD.');
+        }
+
+        return strtoupper($value);
     }
 
     /**

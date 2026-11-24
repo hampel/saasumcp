@@ -90,17 +90,20 @@ Any MCP client that starts a stdio server works the same way: the command is
 |---|---|---|
 | `list-files` | the configured files and their budgets | nothing |
 | `file-access` | whether the login reaches a file, and what the file is | 1 |
-| `get-invoice`, `get-payment`, `get-journal`, `get-contact`, `get-account`, `get-item` | one record by its Saasu id | 1 |
-| `list-invoices` | sales or purchases by date, number or contact | 1 a page, 5 at most |
+| `get-invoice`, `get-payment`, `get-journal` | one record by its Saasu id, its accounts and tax codes named | 1; the lists kept a day |
+| `get-contact`, `get-account`, `get-item` | one record by its Saasu id | 1 |
+| `list-invoices` | sales or purchases by date, number, contact or currency, whole or compact | 1 a page, 5 at most |
 | `list-payments` | payments by date, or those applied to one invoice | 1 a page, 5 at most |
-| `list-journals` | manual journals by date, for a contact, in a currency or touching an account | 1 a page, 5 at most; 1 more a journal read for an account, 25 at most |
+| `list-journals` | manual journals by date, for a contact, in a currency, by text or touching an account | 1 a page, 5 at most; 1 more a journal read for an account, 25 at most |
 | `find-contacts` | contacts by email, reference, name or date changed | 1 a page, 5 at most |
 | `find-items` | inventory items by a search | 1 a page, 5 at most |
 | `list-accounts`, `list-tax-codes` | the whole chart of accounts, every tax code | kept a day; usually nothing |
-| `bank-balances` | each bank account's balance | 1 |
+| `bank-balances` | each bank account's balance now | 1 |
 
 A login costs one more when no token is cached. Records go out as Saasu sends them, less their
-hypermedia links. Every answer carries `budget`: what the call sent and what is left.
+hypermedia links; names go beside a record, never into it. A filter Saasu does not have — currency,
+or text in a journal — is applied to what was listed, so it costs nothing. Every answer carries
+`budget`: what the call sent and what is left.
 
 ## Safety
 

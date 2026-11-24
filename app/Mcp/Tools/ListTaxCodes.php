@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Mcp\Tools;
 
-use Hampel\Saasu\Api\Client;
-use Hampel\Saasu\Api\Result\Page;
+use App\Saasu\Lookups;
+use App\Support\SaasuFile;
 use Laravel\Mcp\Server\Attributes\Description;
 use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
 
@@ -26,9 +26,8 @@ class ListTaxCodes extends CachedList
         return 'tax_codes';
     }
 
-    /** @return Page<covariant \Hampel\Saasu\Api\Entity\Entity> */
-    protected function page(Client $saasu, int $page): Page
+    protected function fetch(Lookups $lookups, SaasuFile $file, bool $refresh): array
     {
-        return $saasu->taxCodes()->list(null, $page);
+        return $lookups->taxCodes($file, $refresh);
     }
 }

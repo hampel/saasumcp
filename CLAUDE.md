@@ -74,8 +74,16 @@ list that stops without comment reads as complete.
   made in Saasu's screens are not readable at all - not journals, not payments, not in search,
   no endpoint - and show only in bank balances (measured by `saasu-api`'s `bank-transfers`
   exercise, 2026-11-22), so `bank-balances`, `list-journals` and the server's instructions say so.
-- **`list-accounts` and `list-tax-codes` are cached for 24 hours** in the same store, shared
-  across processes, because reading any invoice line needs them.
+- **The chart of accounts and the tax codes are cached for 24 hours** in the same store, shared
+  across processes, because reading any invoice line needs them. `App\Saasu\Lookups` holds
+  them; `list-accounts` and `list-tax-codes` answer from it, and `get-invoice`, `get-payment`
+  and `get-journal` name a record's accounts and tax codes from it in `names`, beside the record
+  and never in it. A name lookup the budget cannot fit is a note, not a failure: the record was
+  what was asked for. So one tool call can make two gateway calls, and `requests_this_call` adds
+  them up.
+- **`currency` and `text` are filters Saasu does not have**, applied to the listed summaries, so
+  free; `compact` on `list-invoices` keeps 15 of an invoice's 35 or so fields, asked for after a
+  year of purchases made too large an answer (op1, 2026-11-24).
 
 ## Stdio only, and stdout is the protocol
 
